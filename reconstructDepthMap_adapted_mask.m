@@ -3,7 +3,14 @@ function [Z, C, D] = reconstructDepthMap_adapted_mask(S,imgsize, mask)
 
 addpath('../simulate');
 
-[edgeX, edgeY] = findEdges(mask);
+[xEdge, yEdge] = findEdges(mask);
+validX = logical(mask.*(~xEdge));
+validY = logical(mask.*(~yEdge));
+validX = validX(1:end-1, :);
+validY = validY(:, 1:end-1);
+indX = validX(:);
+indY = validY(:);
+
 
 rows = imgsize(1);
 cols = imgsize(2);
@@ -32,6 +39,10 @@ C1(tind4) = 1;
 tSx = Sx(~isnan(Sx));
 D1 = tSx(:);
 
+% for mask
+C1 = C1(indX,:);
+D1 = D1(indX);
+
 
 % y direction
 [indx, indy] = meshgrid(1:rows, 1:cols-1);
@@ -46,6 +57,10 @@ C2(tind3) = -1;
 C2(tind4) = 1;
 tSy = Sy(~isnan(Sy));
 D2 = tSy(:);
+
+% for mask
+C2 = C2(indY,:);
+D2 = D2(indY);
 
 C = [C1;C2];
 D = [D1;D2];
