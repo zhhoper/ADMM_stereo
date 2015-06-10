@@ -6,7 +6,7 @@ function [X, Y, lam, l3, Z, lambda, SGBR,error,final] = initialize_ADMM(Sim)
 % synthesize a mask
 mask = syn_generateMask(row, col);
 
-Sol = SimpleSolver(Sim.MNoise, [row, col], 3, struct());
+Sol = SimpleSolver(Sim.MNoise, [row, col], 3, mask, struct());
 Sol.solve();
 
 [M, L, S, R, Z] = Sol.extract();

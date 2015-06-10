@@ -150,7 +150,7 @@ classdef Simulator < handle
             Zy = [Zy,Zy(:,end)];
 
             Sim.S = [-Zx(:),-Zy(:),ones(m*n,1)];
-            Sim.S = normr(Sim.S);
+            Sim.S = my_normr(Sim.S);
 %             [nx,ny,nz] = surfnorm(reshape(COORDS(:,1),m,n), reshape(COORDS(:,2),m,n), Sim.Z);
 %             Sim.S = -[nx(:),ny(:),nz(:)];
             
@@ -210,7 +210,7 @@ classdef Simulator < handle
                     end
             end
             
-            L = normr(L);            
+            L = my_normr(L);            
             L = L * 255;    
             Sim.L = L;
             

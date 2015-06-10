@@ -1,9 +1,9 @@
 tic
 clear;  close all; 
-addpath('../solvers');
-addpath('../functions');
-addpath('../external');
-addpath('../simulate')
+addpath('solvers');
+addpath('functions');
+addpath('external');
+addpath('simulate')
 
 
 % generate data
