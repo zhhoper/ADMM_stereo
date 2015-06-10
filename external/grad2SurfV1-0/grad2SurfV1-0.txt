@@ -1,0 +1,24 @@
+Regularized Least-Squares Surface Reconstruction from Gradient Fields: grad2Surf Version 1.0
+
+This toolbox is for the reconstruction of a surface from its measured gradient field.  It is assumed that the gradient field is corrupted by noise, and thereby the package provides algorithms which compute the least-squares solution to the problem, along with various forms of regularization, including:
+
+1) Spectral Regularization
+2) Tikhonov Regularization
+3) Constrained Regularization (Dirichlet Boundary Values)
+4) Weighted Least-Squares
+
+Examples of these types of regularization and how to use the toolbox are given in the accompanying documentation file: g2sIntro.pdf
+
+This toolbox requires the Discrete Orthogonal Polynomial Toolbox (DOPbox):
+http://www.mathworks.com/matlabcentral/fileexchange/41250
+
+The theory behind this toolbox is described in the papers:
+[1] Harker, M., O’Leary, P., Regularized Reconstruction of a Surface from its Measured Gradient Field, (preprint available at arxiv.org)
+[2] Harker, M., O’Leary, P., Direct regularized surface reconstruction from gradients for Industrial Photometric Stereo, Computers in Industry, In Press, 2013.
+http://dx.doi.org/10.1016/j.compind.2013.03.013
+
+See also:
+[3] Harker, M., O’Leary, P., Least squares surface reconstruction from measured gradient fields, IEEE Conference on Computer Vision and Pattern Recognition, CVPR 2008, pp. 1-7.
+http://dx.doi.org/10.1109/CVPR.2008.4587414
+[4] Harker, M., O’Leary, P., Least squares surface reconstruction from gradients: Direct algebraic methods with spectral, Tikhonov, and constrained regularization, IEEE Conference on Computer Vision and Pattern Recognition, CVPR 2011, pp. 2529-2536.
+http://dx.doi.org/10.1109/CVPR.2011.5995427
