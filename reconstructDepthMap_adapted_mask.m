@@ -1,7 +1,7 @@
 function [Z, C, D] = reconstructDepthMap_adapted_mask(S,imgsize, mask)
 % construct depth map using gradients with given mask
 
-addpath('../simulate');
+addpath('simulate');
 
 [xEdge, yEdge] = findEdges(mask);
 validX = logical(mask.*(~xEdge));
@@ -16,11 +16,12 @@ rows = imgsize(1);
 cols = imgsize(2);
 
 pixels = rows*cols;
-num_equ = (rows-1)*cols + (cols-1)*rows;
-% C = zeros(num_equ, pixels);
-% D = zeros(num_equ, 1);
-% x direction
-pos = 0;
+
+S1 = vec2mat_mask(S(1,:), mask);
+S2 = vec2mat_mask(S(2,:), mask);
+S3 = vec2mat_mask(S(3,:), mask);
+S = [S1(:)'; S2(:)'; S3(:)'];
+
 [Sx, Sy] = getGradientField(S,imgsize);
 Sx = Sx(1:end-1,:);
 Sy = Sy(:, 1:end-1);
@@ -36,11 +37,12 @@ tind3 = sub2ind(size(C1), (1:(rows-1)*cols)', tind1);
 tind4 = sub2ind(size(C1), (1:(rows-1)*cols)', tind2);
 C1(tind3) = -1;
 C1(tind4) = 1;
-tSx = Sx(~isnan(Sx));
-D1 = tSx(:);
+Sx(~isnan(Sx)) = 0;
+D1 = Sx(:);
 
 % for mask
 C1 = C1(indX,:);
+C1 = C1(:, mask(:));
 D1 = D1(indX);
 
 
@@ -55,11 +57,12 @@ tind3 = sub2ind(size(C2), (1:rows*(cols-1))', tind1);
 tind4 = sub2ind(size(C2), (1:rows*(cols-1))', tind2);
 C2(tind3) = -1;
 C2(tind4) = 1;
-tSy = Sy(~isnan(Sy));
-D2 = tSy(:);
+Sy(isnan(Sy)) = 0;
+D2 = Sy(:);
 
 % for mask
 C2 = C2(indY,:);
+C2 = C2(:, mask(:));
 D2 = D2(indY);
 
 C = [C1;C2];
@@ -75,7 +78,7 @@ Z = C\D;
 end
 
 function [Sx,Sy] = getGradientField(S,imgsize)
-S = normc(S);
+S = my_normc(S);
 Sx = -reshape(S(1,:) ./ S(3,:), imgsize);
 Sy = -reshape(S(2,:) ./ S(3,:), imgsize);
 

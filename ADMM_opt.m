@@ -19,7 +19,7 @@ out.obj = zeros(max_ite,1);
 
 while count < max_ite && diff > threshold %
     obj_old = obj;
-    var.Z = opt_Z(var.X, var.img_row, var.img_col);
+    var.Z = opt_Z(var.X, var.mask, var.img_row, var.img_col);
      %[~, ~, obj1,~] = objective_fun(var);
      %obj1
     var.lam = opt_lam(var);
@@ -91,7 +91,8 @@ function [obj, obj1, obj2, obj3] = objective_fun(var)
 c2 = var.c2;
 tau = var.tau;
 
-numPixel = var.img_row*var.img_col;   % number of pixels
+%numPixel = var.img_row*var.img_col;   % number of pixels
+numPixel = sum(var.mask(:));   % number of valide pixels
 [row, col] = size(var.X);
 
 x12_x = var.X(1, 3:col);
@@ -100,6 +101,8 @@ x22 = var.X(3:row, 3:col);
 
 img_Z = var.Z;
 [GZ_x, GZ_y] = gradient_xy(img_Z);
+GZ_x = GZ_x(var.mask(:));
+GZ_y = GZ_y(var.mask(:));
 
 tmpOne = ones(1, numPixel);
 obj1 = 0.5*norm(var.W.*(var.M*diag(var.lam) - x22 + var.l3*tmpOne), 'fro')^2;
@@ -107,12 +110,9 @@ obj2 = (norm(GZ_x(:) - x12_x')^2 + norm(GZ_y(:) - x12_y')^2);
 obj3 = norm(var.Y - var.X, 'fro')^2;
 obj33 = norm(var.Y - var.X +  var.lambda, 'fro')^2;
 obj = obj1 + 0.5*c2*obj2 + 0.5*tau*obj33;
-% obj = 0.5*norm(var.W.*(var.M*diag(var.lam) - x22 + var.l3*tmpOne), 'fro')^2+...
-%     c2/2*(norm(GZ_x(:) - x12_x')^2 + norm(GZ_y(:) - x12_y')^2)+...
-%     tau/2*norm(var.Y - var.X + var.lambda, 'fro')^2;
 end
 
-function Z = opt_Z(X, img_row, img_col)
+function Z = opt_Z(X, mask, img_row, img_col)
 % optimize w.r.t. Z
 % solve possion equation to get the result
 
@@ -122,10 +122,11 @@ function Z = opt_Z(X, img_row, img_col)
 
 len=length(X(1:2,3:end));
 S=[-X(1:2,3:end);ones(1,len)];
-Z1 = reconstructDepthMap_adapted(S,[img_row,img_col]);
+Z1 = reconstructDepthMap_adapted_mask(S, [img_row,img_col], mask);
 %Z1 = reconstructDepthMap(S,[img_row,img_col]);
-Z=reshape(Z1,[img_row,img_col]);
 
+%Z=reshape(Z1,[img_row,img_col]);
+Z = vec2mat_mask(Z1, mask);
 end
 
 function lam = opt_lam(var)
@@ -137,7 +138,8 @@ function lam = opt_lam(var)
 % optimize w.r.t. lam
 % NOTE: LAM IS A DIAGONAL MATRIX
 
-numPixel = var.img_row*var.img_col;
+%numPixel = var.img_row*var.img_col;
+numPixel = sum(var.mask(:));  % number of valid pixels
 tmpOne = ones(1, numPixel);
 
 X22 = var.X(3:end, 3:end);
@@ -166,7 +168,8 @@ function l3 = opt_l3(var)
 % optimize w.r.t. l3
 
 a = var.W.*(var.M*diag(var.lam) - var.X(3:end, 3:end));
-numPixel = var.img_row*var.img_col;
+% numPixel = var.img_row*var.img_col;
+numPixel = sum(var.mask(:));  % number of valid pixels
 tmpOne = ones(1, numPixel);
 
 numerator = -a*tmpOne';
@@ -194,11 +197,15 @@ X(3:end, 1:2) = var.Y(3:end, 1:2) + var.lambda(3:end, 1:2);
 
 % get X1,2
 [gx, gy] = gradient_xy(var.Z);
+gx = gx(var.mask(:));
+gy = gy(var.mask(:));
+
 X(1:2, 3:end) = (var.tau*var.Y(1:2, 3:end) + var.tau*var.lambda(1:2, 3:end)...
-    +var.c2*[gx(:), gy(:)]')/(var.tau + var.c2);
+    +var.c2*[gx, gy]')/(var.tau + var.c2);
 
 % get X2,2
-numPixel = var.img_row*var.img_col;
+% numPixel = var.img_row*var.img_col;
+numPixel = sum(var.mask(:));  % number of valid pixels
 tmpOne = ones(1, numPixel);
 B = var.tau*(var.Y(3:end, 3:end) + var.lambda(3:end, 3:end)) + var.W.*...
     (var.M*diag(var.lam) + var.l3*tmpOne);
