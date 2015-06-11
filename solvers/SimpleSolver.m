@@ -111,7 +111,8 @@ classdef SimpleSolver < handle
             %             Sol.ZNew = g2s(Zx', Zy', x',y');
             
             
-            Sol.ZNew = Sol.reconstructDepthMap();
+            % Sol.ZNew = Sol.reconstructDepthMap();
+            Sol.ZNew = Sol.reconstructDepthMap_adapted_mask();
             
             result = struct();
             result.breakReason = 'done';
@@ -130,18 +131,32 @@ classdef SimpleSolver < handle
             
             npixels = size(S,2);
             C = zeros(npixels,6);
+            
+            % we should use valide pixel to compute the projection
+            [xEdge, yEdge] = findEdges(Sol.mask);
+            tmpInd = xEdge | yEdge;
+            tmpInd = tmpInd(:);
+            tmpInd = tmpInd(Sol.mask(:));
+            
+            indexMask = cumsum(Sol.mask(:));
+            
             for p = 1:size(S,2)
-                [x,y] = ind2sub(Sol.imgsize, p);
-                %                 if (x ~= 1 && y ~= 1 && x ~= Sol.imgsize(1) && y ~= Sol.imgsize(2))
-                if (x ~= Sol.imgsize(1) && y ~= Sol.imgsize(2))
-                    s = S(:,p);
-                    %                     s_x = (S(:,sub2ind(Sol.imgsize,x+1,y)) - S(:,sub2ind(Sol.imgsize,x-1,y)))*0.5;
-                    %                     s_y = (S(:,sub2ind(Sol.imgsize,x,y+1)) - S(:,sub2ind(Sol.imgsize,x,y-1)))*0.5;
-                    s_x = S(:,sub2ind(Sol.imgsize,x+1,y)) - s;
-                    s_y = S(:,sub2ind(Sol.imgsize,x,y+1)) - s;
-                    %                     s_x = S(:,sub2ind(Sol.imgsize,x+1,y));
-                    %                     s_y = S(:,sub2ind(Sol.imgsize,x,y+1));
-                    C(p,:) = [cross(s_x,s)', cross(s_y,s)'];
+                if tmpInd(p) ~= 1
+                    tmpP = find(indexMask == p, 1);
+                    [x,y] = ind2sub(Sol.imgsize, tmpP);
+                    %                 if (x ~= 1 && y ~= 1 && x ~= Sol.imgsize(1) && y ~= Sol.imgsize(2))
+                    if (x ~= Sol.imgsize(1) && y ~= Sol.imgsize(2))
+                        s = S(:,p);
+                        %                     s_x = (S(:,sub2ind(Sol.imgsize,x+1,y)) - S(:,sub2ind(Sol.imgsize,x-1,y)))*0.5;
+                        %                     s_y = (S(:,sub2ind(Sol.imgsize,x,y+1)) - S(:,sub2ind(Sol.imgsize,x,y-1)))*0.5;
+                        tmpIndx = indexMask(sub2ind(Sol.imgsize, x+1, y));
+                        tmpIndy = indexMask(sub2ind(Sol.imgsize, x, y+1));
+                        s_x = S(:,tmpIndx) - s;
+                        s_y = S(:,tmpIndy) - s;
+                        %                     s_x = S(:,sub2ind(Sol.imgsize,x+1,y));
+                        %                     s_y = S(:,sub2ind(Sol.imgsize,x,y+1));
+                        C(p,:) = [cross(s_x,s)', cross(s_y,s)'];
+                    end
                 end
             end
             
@@ -237,22 +252,27 @@ classdef SimpleSolver < handle
             else
                 S = varargin{2};
             end
-            imagesize = Sol.imgsize;
-            mask = Sol.mask;
+            Sol.imgsize;
+            Sol.mask;
             
-            addpath('../simulate');
+            tmpS1 = vec2mat_mask(S(1,:), Sol.mask);
+            tmpS2 = vec2mat_mask(S(2,:), Sol.mask);
+            tmpS3 = vec2mat_mask(S(3,:), Sol.mask);
+            S = [tmpS1(:)'; tmpS2(:)'; tmpS3(:)'];
+         
+            addpath('simulate');
             
-            [xEdge, yEdge] = findEdges(mask);
-            validX = logical(mask.*(~xEdge));
-            validY = logical(mask.*(~yEdge));
+            [xEdge, yEdge] = findEdges(Sol.mask);
+            validX = logical(Sol.mask.*(~xEdge));
+            validY = logical(Sol.mask.*(~yEdge));
             validX = validX(1:end-1, :);
             validY = validY(:, 1:end-1);
             indX = validX(:);
             indY = validY(:);
             
             
-            rows = imgsize(1);
-            cols = imgsize(2);
+            rows = Sol.imgsize(1);
+            cols = Sol.imgsize(2);
             
             pixels = rows*cols;
             num_equ = (rows-1)*cols + (cols-1)*rows;
@@ -260,7 +280,7 @@ classdef SimpleSolver < handle
             % D = zeros(num_equ, 1);
             % x direction
             pos = 0;
-            [Sx, Sy] = getGradientField(S,imgsize);
+            [Sx, Sy] = Sol.getGradientField(S);
             Sx = Sx(1:end-1,:);
             Sy = Sy(:, 1:end-1);
             
@@ -269,17 +289,19 @@ classdef SimpleSolver < handle
             C1 = zeros((rows-1)*cols, pixels);
             indx = indx';
             indy = indy';
-            tind1 = sub2ind(imgsize, indx(:), indy(:));
-            tind2 = sub2ind(imgsize, indx(:)+1, indy(:));
+            tind1 = sub2ind(Sol.imgsize, indx(:), indy(:));
+            tind2 = sub2ind(Sol.imgsize, indx(:)+1, indy(:));
             tind3 = sub2ind(size(C1), (1:(rows-1)*cols)', tind1);
             tind4 = sub2ind(size(C1), (1:(rows-1)*cols)', tind2);
             C1(tind3) = -1;
             C1(tind4) = 1;
-            tSx = Sx(~isnan(Sx));
+            Sx(isnan(Sx)) = 0;
+            tSx = Sx(:);
             D1 = tSx(:);
             
             % for mask
             C1 = C1(indX,:);
+            C1 = C1(:, Sol.mask(:));
             D1 = D1(indX);
             
             
@@ -288,17 +310,19 @@ classdef SimpleSolver < handle
             C2 = zeros(rows*(cols-1), pixels);
             indx = indx';
             indy = indy';
-            tind1 = sub2ind(imgsize, indx(:), indy(:));
-            tind2 = sub2ind(imgsize, indx(:), indy(:)+1);
+            tind1 = sub2ind(Sol.imgsize, indx(:), indy(:));
+            tind2 = sub2ind(Sol.imgsize, indx(:), indy(:)+1);
             tind3 = sub2ind(size(C2), (1:rows*(cols-1))', tind1);
             tind4 = sub2ind(size(C2), (1:rows*(cols-1))', tind2);
             C2(tind3) = -1;
             C2(tind4) = 1;
-            tSy = Sy(~isnan(Sy));
+            Sy(isnan(Sy)) = 0;
+            tSy = Sy(:);
             D2 = tSy(:);
             
             % for mask
             C2 = C2(indY,:);
+            C2 = C2(:, Sol.mask(:));
             D2 = D2(indY);
             
             C = [C1;C2];
@@ -306,7 +330,6 @@ classdef SimpleSolver < handle
             C(end+1,1) = 1;
             D(end+1) = 0;
             Z = C\D;
-            
             % Solve Least squares with regularization constant lambda
             %             lambda = max(eig(C' * C)) * 1e-3;
             %             Z = inv(C' * C + lambda * eye(size(C,2))) * C' * D;

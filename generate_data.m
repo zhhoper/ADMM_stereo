@@ -11,7 +11,7 @@ cols = imsize(2);
 lights = 20;
 pixels = prod(imsize);
 
-scenario.object = 'peaks';          % random || peaks     ||  ellipse
+scenario.object = 'ellipse';          % random || peaks     ||  ellipse
 scenario.lighting = 'random';       % random    ||  fitted
 scenario.albedo = 'random';         % number || 'random'
 

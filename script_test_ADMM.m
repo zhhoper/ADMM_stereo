@@ -4,10 +4,10 @@ addpath('solvers');
 addpath('functions');
 addpath('external');
 addpath('simulate')
-
+addpath('newlyADD');
 
 % generate data
-Sim = generate_data(0.0,0.5);
+Sim = generate_data(0,1);
 
 % initialzie data
 [X, Y, lam, l3, Z, lambda, ini_SGRB] = initialize_ADMM(Sim);

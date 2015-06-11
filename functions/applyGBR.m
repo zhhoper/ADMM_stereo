@@ -1,6 +1,6 @@
-function [LRes,ZRes,SRes,RRes,G] = applyGBR(ZGT,RGT, ZGBR, LGBR, SGBR, RGBR)
+function [LRes,ZRes,SRes,RRes,G] = applyGBR(ZGT,RGT, ZGBR, LGBR, SGBR, RGBR, mask)
 
-[G, ZRes] = getGBR(ZGT,ZGBR);
+[G, ZRes] = getGBR(ZGT,ZGBR, mask);
 
 LRes = LGBR*G';
 SRes = my_normr(SGBR/G);

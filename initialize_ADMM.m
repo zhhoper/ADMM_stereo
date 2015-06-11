@@ -11,13 +11,16 @@ Sol.solve();
 
 [M, L, S, R, Z] = Sol.extract();
 
+maskR = Sim.R(mask(:));
 
 
-[LGBR, ZGBR, SGBR, RGBR, G] =  applyGBR(Sim.Z, Sim.R, Z, L, S, R);
+[LGBR, ZGBR, SGBR, RGBR, G] =  applyGBR(Sim.Z, maskR, Z, L, S, R, mask);
 
 if (LGBR(:,1)'*Sim.L(:,1))<0
     LGBR=-LGBR; SGBR=-SGBR;
 end
+
+
 
 
 numImg = size(L,1);
