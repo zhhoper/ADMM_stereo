@@ -275,11 +275,7 @@ classdef SimpleSolver < handle
             cols = Sol.imgsize(2);
             
             pixels = rows*cols;
-            num_equ = (rows-1)*cols + (cols-1)*rows;
-            % C = zeros(num_equ, pixels);
-            % D = zeros(num_equ, 1);
-            % x direction
-            pos = 0;
+
             [Sx, Sy] = Sol.getGradientField(S);
             Sx = Sx(1:end-1,:);
             Sy = Sy(:, 1:end-1);
