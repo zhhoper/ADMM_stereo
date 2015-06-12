@@ -67,7 +67,7 @@ while count < max_ite && diff > threshold %
     fprintf('count: %d, obj %.5e, obj1 %.5e, obj2 %.5e, obj3 %.5e\n', count, obj, obj1, obj2, obj3);
 end
 
-[U, S, V] = svds(var.X, 3);
+[U, S, V] = svds(var.X, 2);
 var.X=U*S*V';
 
 result = struct;
@@ -197,6 +197,12 @@ X(3:end, 1:2) = var.Y(3:end, 1:2) + var.lambda(3:end, 1:2);
 
 % get X1,2
 [gx, gy] = gradient_xy(var.Z);
+[xEdge, yEdge] = findEdges(var.mask);
+edge = xEdge | yEdge;
+
+gx(edge(:)) = 0;
+gy(edge(:)) = 0;
+
 gx = gx(var.mask(:));
 gy = gy(var.mask(:));
 
